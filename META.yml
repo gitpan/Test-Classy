@@ -1,0 +1,19 @@
+--- #YAML:1.0
+name:                Test-Classy
+version:             0.01
+abstract:            write your unit tests in other modules than *.t
+license:             perl
+author:              
+    - Kenichi Ishigaki <ishigaki@cpan.org>
+generated_by:        ExtUtils::MakeMaker version 6.44
+distribution_type:   module
+requires:     
+    Class::Data::Inheritable:      0
+    Class::Inspector:              0
+    Module::Find:                  0
+    Sub::Install:                  0
+    Test::More:                    0.47
+    Test::UseAllModules:           0.09
+meta-spec:
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3
