@@ -32,6 +32,7 @@ sub import {
   if ( $class eq __PACKAGE__ ) {
     $caller->mk_classdata( _tests => {} );
     $caller->mk_classdata( _plan => 0 );
+    $caller->mk_classdata( test_name => '' );
   }
 }
 
@@ -139,6 +140,8 @@ sub _run_tests {
 sub _run_test {
   my ($class, $test, $name, @args) = @_;
 
+  $class->test_name( $name );
+
   if ( exists $test->{TODO} ) {
     my $reason = defined $test->{TODO}
       ? $test->{TODO}
@@ -152,7 +155,7 @@ sub _run_test {
     else {
       TODO: {
         no strict 'refs';
-        local ${"$class\::TODO"} = $reason;
+        local ${"$class\::TODO"} = $reason; # perl 5.6.2 hates this
         $test->{code}($class, @args);
       }
     }
@@ -198,9 +201,8 @@ Test::Classy::Base
 
   package MyApp::Test::ForSomething;
   use Test::Classy::Base;
-  use MyApp::DB;
 
-  _PACKAGE__->mk_classdata('model');
+  __PACKAGE__->mk_classdata('model');
 
   sub initialize {
     my $class = shift;
@@ -215,7 +217,7 @@ Test::Classy::Base
 
   sub mytest : Test {
     my $class = shift;
-    ok $class->model->find('something');
+    ok $class->model->find('something'), $class->test_name." works";
   }
 
   sub finalize {
@@ -241,6 +243,10 @@ This is called before the tests runs. You might want to set up database or somet
 =head2 finalize
 
 This method is (hopefully) called when all the tests in the package are done. You might also want provide END/DESTROY to clean up thingy when the tests should be bailed out.
+
+=head2 test_name
+
+returns the name of the test running currently. Handy to write a meaningful test message.
 
 =head1 NOTES FOR INHERITING TESTS
 

@@ -5,7 +5,7 @@ use warnings;
 use Test::More ();
 use Sub::Install qw( install_sub );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 my @tests;
 my $caller = caller;
@@ -148,8 +148,8 @@ in your unit test class:
     sub test_for_model : Test Model {
       my ($class, @args) = @_;
 
-      # some model-specific unit test
-      pass 'this test is for a model';
+      # you can use $class->test_name to show the name of the test
+      pass $class->test_name;  # "test_for_model"
     }
 
 =head1 DESCRIPTION

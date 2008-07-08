@@ -12,8 +12,9 @@ sub initialize {
   }
 }
 
-sub win_only_test : Test {
-  pass "win only";
+sub win_only : Test {
+  my $class = shift;
+  pass $class->test_name;
 }
 
 1;

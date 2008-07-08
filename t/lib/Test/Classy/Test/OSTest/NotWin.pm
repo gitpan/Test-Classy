@@ -12,8 +12,9 @@ sub initialize {
   }
 }
 
-sub not_for_win_test : Test {
-  pass "not for win";
+sub not_for_win : Test {
+  my $class = shift;
+  pass $class->test_name;
 }
 
 1;
