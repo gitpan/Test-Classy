@@ -1,9 +1,9 @@
-package Test::Classy::Test::Inherit::Base;
+package Test::Classy::Test::Inherit::IgnoreMe;
 
 use strict;
 use warnings;
 use Carp;
-use Test::Classy::Base 'ignore';
+use Test::Classy::Base 'ignore_me';
 
 sub data { croak "should override this" };
 

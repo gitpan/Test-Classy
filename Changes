@@ -1,5 +1,11 @@
 Revision history for Test-Classy
 
+0.03 2008/08/03
+  - added 'ignore_me' option (along with 'ignore')
+  - added $class->dump to dump things (with Data::Dump)
+  - deprecated 'skip_the_rest' in favor of 'skip_this_class'
+  - added 'skip_this_test'/'abort_this_test' to skip a unit
+
 0.02 2008/07/08
   - requires perl 5.8.1 as 5.6.2 can't localize through a reference.
   - fixed a syntax error in the Base synopsis

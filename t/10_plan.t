@@ -8,7 +8,7 @@ plan tests => 2;
 
 load_tests_from 'Test::Classy::Test::Basic';
 
-ok( Test::Classy->plan == 24 );
+ok( Test::Classy->plan == 34 );
 
 Test::Classy->reset; # remove all the previous tests
 

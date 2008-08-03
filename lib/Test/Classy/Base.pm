@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use base qw( Class::Data::Inheritable );
 use Test::More ();
+use Data::Dump;
 use Class::Inspector;
 
 sub import {
@@ -25,8 +26,8 @@ sub import {
     *{"$caller\::$export"} = \&{"Test::More\::$export"};
   }
 
-  if ( grep { $_ eq 'ignore' } @flags ) {
-    ${"$caller\::_ignore"} = 1;
+  if ( grep { $_ eq 'ignore' or $_ eq 'ignore_me' } @flags ) {
+    ${"$caller\::_ignore_me"} = 1;
   }
 
   if ( $class eq __PACKAGE__ ) {
@@ -91,7 +92,7 @@ sub _should_be_ignored {
   my $class = shift;
 
   { no strict 'refs';
-    if ( ${"$class\::_ignore"} ) {
+    if ( ${"$class\::_ignore_me"} ) {
       SKIP: {
         Test::More::skip 'a base class, not to test', $class->_plan;
       }
@@ -126,7 +127,7 @@ sub _run_tests {
   foreach my $name ( sort { $sym{$a} cmp $sym{$b} } grep { $sym{$_} } keys %{ $tests } ) {
     next if $sym{$name} =~ /^(?:initialize|finalize)$/;
 
-    if ( my $reason = $class->_should_skip_the_rest ) {
+    if ( my $reason = $class->_should_skip_this_class ) {
       SKIP: { Test::More::skip $reason, $tests->{$name}->{plan}; }
       next;
     }
@@ -141,6 +142,7 @@ sub _run_test {
   my ($class, $test, $name, @args) = @_;
 
   $class->test_name( $name );
+  $class->_clear_skip_flag;
 
   if ( exists $test->{TODO} ) {
     my $reason = defined $test->{TODO}
@@ -156,7 +158,8 @@ sub _run_test {
       TODO: {
         no strict 'refs';
         local ${"$class\::TODO"} = $reason; # perl 5.6.2 hates this
-        $test->{code}($class, @args);
+
+        $class->__run_test($test, @args);
       }
     }
     return;
@@ -169,21 +172,69 @@ sub _run_test {
     return;
   }
 
-  $test->{code}($class, @args);
+  $class->__run_test($test, @args);
 }
 
-sub skip_the_rest {
+sub __run_test {
+  my ($class, $test, @args) = @_;
+
+  my $current = Test::More->builder->{Curr_Test};
+
+  $test->{code}($class, @args);
+
+  if ( my $reason = $class->_is_skipped ) {
+    my $done = Test::More->builder->{Curr_Test} - $current;
+    my $rest = $test->{plan} - $done;
+    if ( $rest ) {
+      for ( 1 .. $rest ) {
+        Test::More->builder->skip( $reason );
+      }
+    }
+  }
+}
+
+sub skip_this_class {
   my ($class, $reason) = @_;
 
   no strict 'refs';
-  ${"$class\::_skip_the_rest"} = $reason || 'for some reason';
+  ${"$class\::_skip_this_class"} = $reason || 'for some reason';
 }
 
-sub _should_skip_the_rest {
+*skip_the_rest = \&skip_this_class;
+
+sub _should_skip_this_class {
   my $class = shift;
 
   no strict 'refs';
-  return ${"$class\::_skip_the_rest"};
+  return ${"$class\::_skip_this_class"};
+}
+
+sub skip_this_test {
+  my ($class, $reason) = @_;
+
+  no strict 'refs';
+  ${"$class\::_skip_this_test"} = $reason || 'for some reason';
+}
+
+*abort_this_test = \&skip_this_test;
+
+sub _clear_skip_flag {
+  my $class = shift;
+
+  no strict 'refs';
+  ${"$class\::_skip_this_test"} = '';
+}
+
+sub _is_skipped {
+  my $class = shift;
+
+  no strict 'refs';
+  return ${"$class\::_skip_this_test"};
+}
+
+sub dump {
+  my $class = shift;
+  Test::More::diag( Data::Dump::dump( @_ ) );
 }
 
 sub initialize {}
@@ -208,7 +259,7 @@ Test::Classy::Base
     my $class = shift;
 
     eval { require 'Some::Model'; };
-    $class->skip_the_rest('Some::Model is required') if $@;
+    $class->skip_this_class('Some::Model is required') if $@;
 
     my $model = Some::Model->connect;
 
@@ -218,6 +269,16 @@ Test::Classy::Base
   sub mytest : Test {
     my $class = shift;
     ok $class->model->find('something'), $class->test_name." works";
+  }
+
+  sub half_baked : Tests(2) {
+    my $class = shift;
+
+    pass 'this test';
+
+    return $class->abort_this_test('for some reason');
+
+    fail 'this test';
   }
 
   sub finalize {
@@ -232,9 +293,43 @@ This is a base class for actual tests. See L<Test::Classy> for basic usage.
 
 =head1 CLASS METHODS
 
-=head2 skip_the_rest
+=head2 skip_this_class ( skip_the_rest -- deprecated )
 
-If you called this with a reason why you want to skip (unsupported OS or lack of modules, for example), all the remaining tests in the package will be skipped.
+If you called this with a reason why you want to skip (unsupported OS or lack of modules, for example), all the tests in the package will be skipped. Note that this is useful in the initialize phase. You need to use good old 'skip' and 'Skip:' block when you want to skip some of the tests in a test unit.
+
+  sub some_test : Tests(2) {
+    my $class = shift;
+
+    pass 'this test passes';
+
+    Skip: {
+      eval "require something";
+
+      skip $@, 1 if $@;
+
+      fail 'this may fail sometimes';
+    }
+  }
+
+=head2 skip_this_test, abort_this_test
+
+That said, 'skip' and 'Skip:' block may be a bit cumbersome especially when you just want to skip the rest of a test (as this is a unit test, you usually don't need to continue to test the rest of the unit test when you skip).
+
+With 'skip_this_test' or 'abort_this_test', you can rewrite the above example like this:
+
+  sub some_test : Tests(2) {
+    my $class = shift;
+
+    pass 'this test passes';
+
+    eval "require something";
+
+    return $class->abort_this_test($@) if $@;
+
+    fail 'this may fail sometimes';
+  }
+
+Note that you need to 'return' actually to abort.
 
 =head2 initialize
 
@@ -247,6 +342,10 @@ This method is (hopefully) called when all the tests in the package are done. Yo
 =head2 test_name
 
 returns the name of the test running currently. Handy to write a meaningful test message.
+
+=head2 dump
+
+dumps the content of arguments with Data::Dump::dump as a diagnostic message.
 
 =head1 NOTES FOR INHERITING TESTS
 
@@ -277,10 +376,10 @@ You also can add 'base' option while using your base class. In this case, all th
 
   sub test : Test { ok shift->model->does_fine; }
 
-When your base class has some common tests to be inherited, and you don't want them to be tested in the base class, add 'ignore' option when you use Test::Classy::Base:
+When your base class has some common tests to be inherited, and you don't want them to be tested in the base class, add 'ignore_me' (or 'ignore') option when you use Test::Classy::Base:
 
   package MyApp::Test::AnotherBase;
-  use Test::Classy::Base 'ignore';
+  use Test::Classy::Base 'ignore_me';
 
   sub not_for_base : Test { pass 'for children only' };
 

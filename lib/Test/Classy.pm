@@ -5,7 +5,7 @@ use warnings;
 use Test::More ();
 use Sub::Install qw( install_sub );
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 my @tests;
 my $caller = caller;
@@ -162,7 +162,7 @@ Unlike L<Test::Class>, Test::Classy (actually Test::Classy::Base) is based on L<
 
 =head2 load_tests_from
 
-takes a namespace as an argument and loads all the classes found under that (so, you may want to 'use lib' first). If you have some base test classes there, you may want to add 'ignore' option to 'use Test::Classy::Base' to be ignored while testing.
+takes a namespace as an argument and loads all the classes found under that (so, you may want to 'use lib' first). If you have some base test classes there, you may want to add 'ignore_me' (or 'ignore') option to 'use Test::Classy::Base' to be ignored while testing.
 
   (in your .t file)
     use Test::Classy;
@@ -181,7 +181,7 @@ takes a namespace as an argument and loads all the classes found under that (so,
 
   (in other base class)
     package MyApp::Test::AnotherBase;
-    use Test::Classy::Base 'ignore';
+    use Test::Classy::Base 'ignore_me';
 
     # only children will test this.
     sub for_children_only : Test {}

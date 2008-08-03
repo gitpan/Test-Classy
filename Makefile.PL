@@ -11,6 +11,7 @@ WriteMakefile(
   PREREQ_PM => {
     'Class::Data::Inheritable' => 0,
     'Class::Inspector'         => 0,
+    'Data::Dump'               => 0,
     'Module::Find'             => 0,
     'Sub::Install'             => 0,
     'Test::More'               => '0.47',
