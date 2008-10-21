@@ -14,7 +14,7 @@ sub initialize {
 
 sub win_only : Test {
   my $class = shift;
-  pass $class->test_name;
+  pass $class->message;
 }
 
 1;

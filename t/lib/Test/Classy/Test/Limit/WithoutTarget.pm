@@ -5,7 +5,9 @@ use warnings;
 use Test::Classy::Base;
 
 sub not_targeted_at_all : Test {
-  fail 'this test should be skipped';
+  my $class = shift;
+
+  fail $class->message('this test should be skipped');
 }
 
 1;

@@ -77,7 +77,7 @@ sub _limit {
   my ($class, @monikers) = @_;
 
   my $tests = $class->_tests;
-  my $reason = 'tests only ' . ( join ', ', @monikers );
+  my $reason = 'limited by attributes';
 
 LOOP:
   foreach my $name ( keys %{ $tests } ) {
@@ -120,6 +120,8 @@ sub _run_tests {
 
   my %sym = $class->_find_symbols;
 
+  $class->test_name( undef );
+
   $class->initialize(@args);
 
   my $tests = $class->_tests;
@@ -128,7 +130,7 @@ sub _run_tests {
     next if $sym{$name} =~ /^(?:initialize|finalize)$/;
 
     if ( my $reason = $class->_should_skip_this_class ) {
-      SKIP: { Test::More::skip $reason, $tests->{$name}->{plan}; }
+      SKIP: { Test::More::skip $class->message($reason), $tests->{$name}->{plan}; }
       next;
     }
 
@@ -151,13 +153,13 @@ sub _run_test {
 
     if ( exists $test->{Skip} ) {  # todo skip
       TODO: {
-        Test::More::todo_skip $reason, $test->{plan};
+        Test::More::todo_skip $class->message($reason), $test->{plan};
       }
     }
     else {
       TODO: {
         no strict 'refs';
-        local ${"$class\::TODO"} = $reason; # perl 5.6.2 hates this
+        local ${"$class\::TODO"} = $class->message($reason); # perl 5.6.2 hates this
 
         $class->__run_test($test, @args);
       }
@@ -168,7 +170,7 @@ sub _run_test {
     my $reason = defined $test->{Skip}
       ? $test->{Skip}
       : "skipped $name";
-    SKIP: { Test::More::skip $reason, $test->{plan}; }
+    SKIP: { Test::More::skip $class->message($reason), $test->{plan}; }
     return;
   }
 
@@ -187,7 +189,7 @@ sub __run_test {
     my $rest = $test->{plan} - $done;
     if ( $rest ) {
       for ( 1 .. $rest ) {
-        Test::More->builder->skip( $reason );
+        Test::More->builder->skip( $class->message($reason) );
       }
     }
   }
@@ -237,6 +239,36 @@ sub dump {
   Test::More::diag( Data::Dump::dump( @_ ) );
 }
 
+sub message {
+  my ($class, $message) = @_;
+
+  return $class->_prepend_class_name( $class->_prepend_test_name( $message ) );
+}
+
+sub _prepend_test_name {
+  my ($class, $message) = @_;
+
+  $message = '' unless defined $message;
+
+  if ( my $name = $class->test_name ) {
+    $message = "$name: $message" unless $message =~ /\b$name\b/;
+  }
+
+  return $message;
+}
+
+sub _prepend_class_name {
+  my ($class, $message) = @_;
+
+  $message = '' unless defined $message;
+
+  if ( my ($name) = $class =~ /(\w+)$/ ) {
+    $message = "$name: $message" unless $message =~ /\b$name\b/;
+  }
+
+  return $message;
+}
+
 sub initialize {}
 sub finalize {}
 
@@ -268,17 +300,17 @@ Test::Classy::Base
 
   sub mytest : Test {
     my $class = shift;
-    ok $class->model->find('something'), $class->test_name." works";
+    ok $class->model->find('something'), $class->message('works');
   }
 
   sub half_baked : Tests(2) {
     my $class = shift;
 
-    pass 'this test';
+    pass $class->message('this test');
 
     return $class->abort_this_test('for some reason');
 
-    fail 'this test';
+    fail $class->message('this test');
   }
 
   sub finalize {
@@ -295,7 +327,7 @@ This is a base class for actual tests. See L<Test::Classy> for basic usage.
 
 =head2 skip_this_class ( skip_the_rest -- deprecated )
 
-If you called this with a reason why you want to skip (unsupported OS or lack of modules, for example), all the tests in the package will be skipped. Note that this is useful in the initialize phase. You need to use good old 'skip' and 'Skip:' block when you want to skip some of the tests in a test unit.
+If you called this with a reason why you want to skip (unsupported OS or lack of modules, for example), all the tests in the package will be skipped. Note that this is only useful in the initialize phase. You need to use good old 'skip' and 'Skip:' block when you want to skip some of the tests in a test unit.
 
   sub some_test : Tests(2) {
     my $class = shift;
@@ -333,7 +365,7 @@ Note that you need to 'return' actually to abort.
 
 =head2 initialize
 
-This is called before the tests runs. You might want to set up database or something like that here. You can store initialized thingy as a class data (via Class::Data::Inheritable), or as a package-wide variable, maybe. Note that you can set up thingy in a test script and pass it as an argument for each of the tests instead.
+This is called before the tests run. You might want to set up database or something like that here. You can store initialized thingy as a class data (via Class::Data::Inheritable), or as a package-wide variable, maybe. Note that you can set up thingy in a test script and pass it as an argument for each of the tests instead.
 
 =head2 finalize
 
@@ -342,6 +374,10 @@ This method is (hopefully) called when all the tests in the package are done. Yo
 =head2 test_name
 
 returns the name of the test running currently. Handy to write a meaningful test message.
+
+=head2 message
+
+prepends the last bit of the class name, and the test name currently running if any, to a message.
 
 =head2 dump
 
@@ -382,6 +418,10 @@ When your base class has some common tests to be inherited, and you don't want t
   use Test::Classy::Base 'ignore_me';
 
   sub not_for_base : Test { pass 'for children only' };
+
+=head1 CAVEATS
+
+Beware if you want to inherit only some of the tests from a base class (to remove or replace others). All the tests with a C<Test(s)> attribute will be counted while calculating the test plan (i.e. both the ones to replace and the ones to be replaced will be counted). The simplest remedy to avoid a plan error is to use C<no_plan> obviously, but you may find it better to split the class into the mandatory one, and the one which may be skipped while initializing.
 
 =head1 AUTHOR
 

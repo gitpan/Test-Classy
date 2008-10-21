@@ -10,7 +10,7 @@ sub data { croak "should override this" };
 sub test : Test {
   my ($class, @args) = @_;
 
-  pass "tested ".$class->data; # should be ignored here
+  pass $class->message("tested ".$class->data); # should be ignored here
 }
 
 1;

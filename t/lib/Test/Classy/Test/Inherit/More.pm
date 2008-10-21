@@ -8,7 +8,8 @@ use Test::More; # require this as "use base" doesn't import things
 sub data { 'more' };
 
 sub more_test : Test {
-  pass "yet another test";
+  my $class = shift;
+  pass $class->message("yet another test");
 }
 
 1;

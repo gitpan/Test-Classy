@@ -5,11 +5,15 @@ use warnings;
 use Test::Classy::Base;
 
 sub limit_test : Test Target {
-  pass 'this test will be executed';
+  my $class = shift;
+
+  pass $class->message('this test will be executed');
 }
 
 sub not_targeted : Test {
-  fail 'this test should be skipped';
+  my $class = shift;
+
+  fail $class->message('this test should be skipped');
 }
 
 1;

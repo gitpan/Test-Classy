@@ -5,33 +5,47 @@ use warnings;
 use Test::Classy::Base;
 
 sub test : Test(no_plan) {
-  pass 'no plan';
+  my $class = shift;
+
+  pass $class->message('no plan');
 }
 
 sub test2 : Test('no_plan') {
-  pass 'no plan with single quotes';
+  my $class = shift;
+
+  pass $class->message('no plan with single quotes');
 }
 
 sub test3 : Test("no_plan") {
-  pass 'no plan with double quotes';
+  my $class = shift;
+
+  pass $class->message('no plan with double quotes');
 }
 
 # followings should not be parsed as tests
 
 sub test4 : Test("no_plan') {
-  fail 'quotes mismatch';
+  my $class = shift;
+
+  fail $class->message('quotes mismatch');
 }
 
 sub test5 : Test(no_plan') {
-  fail 'quotes mismatch';
+  my $class = shift;
+
+  fail $class->message('quotes mismatch');
 }
 
 sub test6 : Test(no_plan") {
-  fail 'quotes mismatch';
+  my $class = shift;
+
+  fail $class->message('quotes mismatch');
 }
 
 sub test7 : Test(noplan) {
-  fail 'bad plan name';
+  my $class = shift;
+
+  fail $class->message('bad plan name');
 }
 
 1;

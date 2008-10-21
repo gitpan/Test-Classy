@@ -7,7 +7,9 @@ use Test::Classy::Test::Inherit::Use 'base';
 sub data { 'use_further' };
 
 sub further_test : Test {
-  pass "further test";
+  my $class = shift;
+
+  pass $class->message("further test");
 }
 
 1;

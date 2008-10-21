@@ -1,5 +1,10 @@
 Revision history for Test-Classy
 
+0.04 2008/10/21
+  - added $class->message to prepend test/class names to
+    a test message to make it easier to see which test
+    comes from which class.
+
 0.03 2008/08/03
   - added 'ignore_me' option (along with 'ignore')
   - added $class->dump to dump things (with Data::Dump)

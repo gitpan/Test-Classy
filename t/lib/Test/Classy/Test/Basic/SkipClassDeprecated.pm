@@ -12,7 +12,9 @@ sub initialize {
 }
 
 sub failing_test2 : Test {
-  fail "but this is to be skipped";
+  my $class = shift;
+
+  fail $class->message("but this is to be skipped");
 }
 
 1;
