@@ -182,7 +182,27 @@ sub __run_test {
 
   my $current = Test::More->builder->{Curr_Test};
 
-  $test->{code}($class, @args);
+  local $@;
+  eval { $test->{code}($class, @args); };
+  if ( $@ ) {
+    my $done = Test::More->builder->{Curr_Test} - $current;
+    my $rest = $test->{plan} - $done;
+    if ( $rest ) {
+      if ( exists $test->{TODO} ) {
+        my $reason = defined $test->{TODO}
+          ? $test->{TODO}
+          : 'not implemented';
+        TODO: {
+          Test::More::todo_skip( $class->message("$reason: $@"), $rest );
+        }
+      }
+      else {
+        for ( 1 .. $rest ) {
+          Test::More::ok( 0, $class->message($@) );
+        }
+      }
+    }
+  }
 
   if ( my $reason = $class->_is_skipped ) {
     my $done = Test::More->builder->{Curr_Test} - $current;

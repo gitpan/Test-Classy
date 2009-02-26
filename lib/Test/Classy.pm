@@ -5,7 +5,7 @@ use warnings;
 use Test::More ();
 use Sub::Install qw( install_sub );
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 my @tests;
 my $caller = caller;
@@ -154,7 +154,7 @@ in your unit test class:
 
 =head1 DESCRIPTION
 
-This is yet another L<Test::Class>-like unit testing framework. As stated in L<Test::Class> perldoc, you don't need to care if your tests are small and working correctly. If not, this may be one of your options.
+This is yet another L<Test::Class>-like unit testing framework. As stated in L<Test::Class> pod, you don't need to care if your tests are small and working correctly. If not, this may be one of your options.
 
 Unlike L<Test::Class>, Test::Classy (actually Test::Classy::Base) is based on L<Test::More> and exports everything L<Test::More> exports. Test::Classy doesn't control test flow as fully as L<Test::Class>, but it may be easier to skip and limit tests.
 
@@ -209,12 +209,33 @@ returns the number of declared test. You usually don't need to declare test plan
 
     load_tests_from 'MyApp::Test';
 
-    plan tests => Test::Classy->plan + 1;
+    Test::More::plan(tests => Test::Classy->plan + 1);
     run_tests;
 
     pass 'the extra tests';
 
 If you want to use 'no_plan', declare it (plan "no_plan") beforehand by yourself, or use 'Test(no_plan)' attribute somewhere in your test classes.
+
+This also helps when you want to run tests with various environments. Following is an example to test an L<Any::Moose> based project.
+
+  (in your .t file)
+    use Test::Classy;
+
+    load_tests_from 'MyAnyMooseApp::Test';
+
+    Test::More::plan(tests => Test::Classy->plan * 2);
+
+    foreach my $moose (qw(Mouse Moose)) {
+        SKIP: {
+            eval "require $moose";
+            Test::More::skip("requires $moose",
+                             Test::Classy->plan) if $@;
+
+            Test::More::diag("testing $moose");
+            local $ENV{ANY_MOOSE} = $moose;
+            run_tests;
+        }
+    }
 
 =head2 reset
 

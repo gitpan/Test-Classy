@@ -1,5 +1,9 @@
 Revision history for Test-Classy
 
+0.05 2009/02/26
+  - now each test is "eval"-ed to trap accidental dies.
+  - added an example to run tests with various environments.
+
 0.04 2008/10/21
   - added $class->message to prepend test/class names to
     a test message to make it easier to see which test
