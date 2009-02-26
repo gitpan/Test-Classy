@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Test-Classy
-version:            0.05
+version:            0.06
 abstract:           write your unit tests in other modules than *.t
 author:
     - Kenichi Ishigaki <ishigaki@cpan.org>

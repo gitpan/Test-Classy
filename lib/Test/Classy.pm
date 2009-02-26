@@ -5,7 +5,7 @@ use warnings;
 use Test::More ();
 use Sub::Install qw( install_sub );
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 my @tests;
 my $caller = caller;
@@ -215,27 +215,6 @@ returns the number of declared test. You usually don't need to declare test plan
     pass 'the extra tests';
 
 If you want to use 'no_plan', declare it (plan "no_plan") beforehand by yourself, or use 'Test(no_plan)' attribute somewhere in your test classes.
-
-This also helps when you want to run tests with various environments. Following is an example to test an L<Any::Moose> based project.
-
-  (in your .t file)
-    use Test::Classy;
-
-    load_tests_from 'MyAnyMooseApp::Test';
-
-    Test::More::plan(tests => Test::Classy->plan * 2);
-
-    foreach my $moose (qw(Mouse Moose)) {
-        SKIP: {
-            eval "require $moose";
-            Test::More::skip("requires $moose",
-                             Test::Classy->plan) if $@;
-
-            Test::More::diag("testing $moose");
-            local $ENV{ANY_MOOSE} = $moose;
-            run_tests;
-        }
-    }
 
 =head2 reset
 

@@ -1,5 +1,8 @@
 Revision history for Test-Classy
 
+0.06 2009/02/26
+  - removed the previous example.
+
 0.05 2009/02/26
   - now each test is "eval"-ed to trap accidental dies.
   - added an example to run tests with various environments.
