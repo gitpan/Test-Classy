@@ -33,4 +33,5 @@ t/lib/Test/Classy/Test/Limit/WithoutTarget.pm
 t/lib/Test/Classy/Test/NoPlan/NoPlan.pm
 t/lib/Test/Classy/Test/OSTest/NotWin.pm
 t/lib/Test/Classy/Test/OSTest/Win.pm
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)

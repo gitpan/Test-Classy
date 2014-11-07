@@ -23,6 +23,8 @@ sub import {
   no strict 'refs';
   push @{"$caller\::ISA"}, $class;
 
+  Test::Stream::Toolset::init_tester($caller) if $INC{'Test/Stream/Toolset.pm'};
+
   # XXX: not sure why but $TODO refused to be exported well
   *{"$caller\::TODO"} = \$Test::More::TODO;
 
@@ -272,7 +274,7 @@ sub message {
 
   $message = $class->_prepend_class_name( $class->_prepend_test_name( $message ) );
 
-  $message = $ENCODE->encode($message) if $ENCODE && $INC{'utf8.pm'};
+  $message = $ENCODE->encode($message) if $ENCODE && Encode::is_utf8($message);
 
   return $message;
 }
@@ -283,7 +285,6 @@ sub _prepend_test_name {
   $message = '' unless defined $message;
 
   if ( my $name = $class->test_name ) {
-    $name = decode_utf8($name) if $ENCODE && $INC{'utf8.pm'};
     $message = "$name: $message" unless $message =~ /\b$name\b/;
   }
 
